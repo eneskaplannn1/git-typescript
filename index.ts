@@ -72,3 +72,37 @@ class Git {
     return history;
   }
 }
+
+const MasterBranch: Branch = {
+  name: "dmmy_Name",
+  commit: {
+    name: "last commit",
+    id: 3,
+    parent: {
+      name: "second commit ",
+      id: 2,
+      parent: {
+        name: "initial commit",
+        id: 1,
+        parent: null,
+      },
+    },
+  },
+};
+const MainBranch: Branch = {
+  name: "dmmy_Name",
+  commit: {
+    name: "last commit",
+    id: 3,
+    parent: {
+      name: "second commit ",
+      id: 2,
+      parent: {
+        name: "initial commit",
+        id: 1,
+        parent: null,
+      },
+    },
+  },
+};
+const Branches = [MasterBranch, MainBranch];
