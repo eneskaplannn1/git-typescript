@@ -1,8 +1,10 @@
 class Commit {
   constructor(
-    public name: string,
+    public author: string,
+    public message: string,
     public parent: Commit | null,
-    public id: number
+    public id: number,
+    public date: number
   ) {}
 }
 
@@ -27,11 +29,13 @@ class Git {
     this.HEAD = master; // Head will be set to the master branch
   }
 
-  commit(message: string): Commit {
+  commit(author: string, message: string): Commit {
     const commit: Commit = new Commit(
+      author,
       message,
       this.HEAD.commit,
-      ++this.lastCommit
+      ++this.lastCommit,
+      Date.now()
     );
     this.HEAD.commit = commit;
     return commit;
@@ -57,6 +61,116 @@ class Git {
     console.log("Switched to new branch: " + branchName);
 
     return this;
+  }
+
+  mergeBranch(branchName: string): Git {
+    const branchToMerge: Branch | undefined = this.branches.find(
+      (branch) => branch.name === branchName
+    );
+
+    if (!branchToMerge) {
+      console.log("Error : No branch found!");
+      return this;
+    }
+
+    const newCommit: Commit = new Commit(
+      "System",
+      `Merged ${branchName} to ${this.HEAD.name}`,
+      this.HEAD.commit,
+      this.lastCommit++,
+      Date.now()
+    );
+
+    this.HEAD.commit = newCommit;
+
+    console.log(`Merged ${branchName} to ${this.HEAD.name}`);
+    return this;
+  }
+
+  deleteBranch(branchName: string): Git {
+    const index: number = this.branches.findIndex(
+      (el) => el.name === branchName
+    );
+
+    if (index === -1) {
+      console.log("Error: No branch found!");
+      return this;
+    }
+
+    this.branches.splice(index, 1);
+    console.log(`Deleted Branch: ${branchName}`);
+    return this;
+  }
+
+  revertCommit(commitId: number): Git {
+    const commitToRevert = this.findCommitById(commitId);
+
+    if (!commitToRevert) {
+      console.log("Error : No commit found!");
+      return this;
+    }
+
+    const newCommit: Commit = new Commit(
+      "System",
+      `reverted commit ${commitId}`,
+      this.HEAD.commit,
+      ++this.lastCommit,
+      Date.now()
+    );
+
+    this.HEAD.commit = newCommit;
+    console.log(`Reverted commit ${commitId}`);
+
+    return this;
+  }
+
+  findCommitById(commitId: number): Commit | null {
+    let commit: Commit | null = this.HEAD.commit;
+
+    while (commit) {
+      if (commit.id == commitId) {
+        return commit;
+      }
+
+      commit = commit.parent;
+    }
+
+    return null;
+  }
+
+  compareBranches(branchName1: string, branchName2: string): number[] {
+    const branch1: Branch | undefined = this.branches.find(
+      (branch) => branch.name === branchName1
+    );
+    const branch2: Branch | undefined = this.branches.find(
+      (branch) => branch.name === branchName2
+    );
+    if (!branch1 && !branch2) {
+      console.log("Error: One or more branch not found!");
+      return [];
+    }
+
+    const history1 = this.getCommitHistory(branch1!);
+    const history2 = this.getCommitHistory(branch2!);
+
+    const commonComits = history1.filter((commitId) =>
+      history2.includes(commitId)
+    );
+
+    return commonComits;
+  }
+
+  getCommitHistory(branch: Branch): number[] {
+    let commit: Commit | null = branch.commit;
+    const history: number[] = [];
+
+    while (commit) {
+      history.push(commit.id);
+
+      commit = commit.parent;
+    }
+
+    return history;
   }
 
   log(): number[] {
@@ -106,3 +220,17 @@ class Git {
 //   },
 // };
 // const Branches = [MasterBranch, MainBranch];
+
+const git = new Git("");
+
+git.commit("initial commit");
+git.log();
+
+git.checkout("main");
+git.commit("updated application");
+git.commit("fixed bug");
+
+git.log();
+
+git.checkout("master");
+git.log();
